@@ -1,2 +1,2 @@
 require('coffee-script/register');
-module.exports = require('./lib/manager');
+module.exports = require('./lib/asset-reflux');

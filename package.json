@@ -1,24 +1,18 @@
 {
   "name": "asset-reflux",
   "version": "0.0.0",
-  "description": "Caching build system engine for HTML5 apps",
+  "description": "Engine for building front end code",
   "author": "Callum Locke",
   "license": "MIT",
   "dependencies": {
-    "urlsafe-base64": "^0.0.2",
-    "buffer-equal": "^0.0.1",
-    "graceful-fs": "^3.0.2",
-    "async": "^0.9.0",
-    "mkdirp": "^0.5.0",
-    "bluebird": "^2.2.2",
-    "chalk": "^0.5.1",
-    "lodash": "^2.4.1",
-    "find-assets": "^0.2.0"
-  },
-  "devDependencies": {
-    "mocha": "^1.21.3",
-    "istanbul": "^0.3.0",
-    "chai": "^1.9.1",
-    "rimraf": "^2.2.8"
+    "args-js": "~0.10.5",
+    "async": "~0.9.0",
+    "bluebird": "~2.3.5",
+    "buffer-equal": "~0.0.1",
+    "chalk": "~0.5.1",
+    "find-assets": "~0.2.0",
+    "lodash": "~2.4.1",
+    "urlsafe-base64": "~0.0.2",
+    "x-file": "~0.1.2"
   }
 }
