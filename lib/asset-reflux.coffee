@@ -9,7 +9,7 @@ Engine = require './engine'
 module.exports = (options) -> new Engine options;
 module.exports.Engine = Engine
 
-# also export some other deps so wrapper lib can reuse them
+# also export various utility deps, in case a wrapper lib wants them
 module.exports.async    = require 'async'
 module.exports.Promise  = require 'bluebird'
 module.exports.chalk    = require 'chalk'

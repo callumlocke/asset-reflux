@@ -14,6 +14,7 @@ module.exports = (callback) ->
   @_started = true
 
   @allFinalised = new Promise (resolve, reject) =>
+    # delete contents promises for changed paths
     for sourcePath in @changedPaths
       if @engine.debug
         if @engine._sources[sourcePath]?._getContents?
@@ -54,7 +55,7 @@ module.exports = (callback) ->
 
     , (err, jobs) =>
       # this workload is finished.
-      @_workloadRunning = false
+      @_started = false
 
       if err?
         reject err

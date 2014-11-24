@@ -46,11 +46,16 @@ module.exports = ->
 
                         newPath = child.job.builder.getPrimaryTargetPath() # will this get revved if nec?
 
-                        # TODO this properly
-                        newElement = switch child.job.builder.ext
-                          when '.js' then '<script src="' + newPath + '"></script>'
-                          when '.css' then '<link rel="stylesheet" href="' + newPath + '">'
-                          else '<todo src="' + newPath + '"></todo>'
+
+                        # TODO: preserve other attributes that might be on it, by just using
+                        # whatever is in child.details[child.details.length-1].string, and overwriting
+                        # the relevant attribute.
+                        newElement = switch child.details[0].type
+                          when 'script' then '<script src="' + newPath + '"></script>'
+                          when 'stylesheet' then '<link rel="stylesheet" href="' + newPath + '">'
+                          when 'img' then '<img src="' + newPath + '">'
+
+                        if !newElement? then throw new Error "don't know what to do with #{child.details[0].type}"
 
                         newString += (
                           oldString.substring(lastIndex, refStart) +

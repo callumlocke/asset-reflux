@@ -110,6 +110,7 @@ module.exports = class Engine
       throw new TypeError 'Expected string'
 
     # we delete the contents promise, not the sourceloader itself.
+    # TODO: AR shouldn't even have source loaders; an engine can just use readFile every time. exhibit can do the caching so AR doesn't have to.
     @_sources[sourcePath]?_getContents = null
 
     # we should also unset the job on any builders for this source, forcing the next 'getJob' to make a new one (makes children work)
