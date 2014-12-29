@@ -1,18 +1,18 @@
 {
   "name": "asset-reflux",
-  "version": "0.0.1",
   "description": "Engine for building front end code",
+  "version": "0.0.1",
   "author": "Callum Locke",
-  "license": "MIT",
   "dependencies": {
     "args-js": "~0.10.5",
     "async": "~0.9.0",
     "bluebird": "~2.3.5",
     "buffer-equal": "~0.0.1",
     "chalk": "~0.5.1",
-    "find-assets": "~0.2.0",
+    "find-assets": "~0.3.1",
     "lodash": "~2.4.1",
     "urlsafe-base64": "~0.0.2",
     "x-file": "~0.1.2"
-  }
+  },
+  "license": "MIT"
 }
