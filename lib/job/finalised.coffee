@@ -9,6 +9,7 @@
 Promise = require 'bluebird'
 File = require 'x-file'
 _ = require 'lodash'
+path = require 'path'
 
 module.exports = ->
   if !@_finalised?
@@ -46,6 +47,11 @@ module.exports = ->
 
                         newPath = child.job.builder.getPrimaryTargetPath() # will this get revved if nec?
 
+                        # make the newPath relative to this builder/job's dirname
+                        newPath = path.relative(
+                          path.dirname(@builder.getPrimaryTargetPath())
+                          newPath
+                        )
 
                         # TODO: preserve other attributes that might be on it, by just using
                         # whatever is in child.details[child.details.length-1].string, and overwriting
