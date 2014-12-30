@@ -59,6 +59,7 @@ module.exports = ->
                         newElement = switch child.details[0].type
                           when 'script' then '<script src="' + newPath + '"></script>'
                           when 'stylesheet' then '<link rel="stylesheet" href="' + newPath + '">'
+                          when 'import' then '<link rel="import" href="' + newPath + '">'
                           when 'img' then '<img src="' + newPath + '">'
 
                         if !newElement? then throw new Error "don't know what to do with #{child.details[0].type}"
