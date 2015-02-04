@@ -16,6 +16,7 @@ module.exports = ->
       @_getChildren = new Promise (resolve) =>
         console.assert @builder.engine.crawl is true
 
+
         @getJoinedContents().then (joinedContents) =>
           console.assert Buffer.isBuffer(joinedContents)
 
@@ -36,6 +37,8 @@ module.exports = ->
 
               { resolvedURLPaths, job, details }
             )
+
+          @log 'getJoinedChildren', children
 
           resolve(children)
 

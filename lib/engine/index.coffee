@@ -128,6 +128,8 @@ module.exports = class Engine
     # this could be recursive, but in reality it can only have parents and grandparents
     # (css image > css file > html file) so we just do it in 2 steps
 
+    # WARNING: this could now be more than two, because of HTML imports. Rewrite.
+
     # first find any builders that directly use the given child path.
     childBuilders = []
     for own builderId, builder of @_builders
