@@ -9,7 +9,7 @@
 Promise = require 'bluebird'
 File = require 'x-file'
 _ = require 'lodash'
-path = require 'path'
+urlPath = require 'path-browserify'
 
 module.exports = ->
   if !@_finalised?
@@ -48,8 +48,8 @@ module.exports = ->
                         newPath = child.job.builder.getPrimaryTargetPath() # will this get revved if nec?
 
                         # make the newPath relative to this builder/job's dirname
-                        newPath = path.relative(
-                          path.dirname(@builder.getPrimaryTargetPath())
+                        newPath = urlPath.relative(
+                          urlPath.dirname(@builder.getPrimaryTargetPath())
                           newPath
                         )
 

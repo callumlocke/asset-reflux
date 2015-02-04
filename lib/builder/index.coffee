@@ -6,7 +6,7 @@
 ###
 
 _ = require 'lodash'
-path = require 'path'
+urlPath = require 'path-browserify'
 bufferEqual = require 'buffer-equal'
 Promise = require 'bluebird'
 Job = require '../job'
@@ -34,7 +34,7 @@ module.exports = class Builder extends EventEmitter
     options = _.assign {}, defaults, _options
     @files = (if _.isString options.files then [options.files] else options.files)
     @engine = options.engine
-    @ext = path.extname @files[0]
+    @ext = urlPath.extname @files[0]
     @concat = options.concat
     @isPrimary = options.isPrimary
 
@@ -109,7 +109,7 @@ module.exports = class Builder extends EventEmitter
 
   getParentBuilders: ->
     # return any immediate parents of this builder, based on the last job. i.e. builders that have children including this one. they will be child jobs, and we can see if this is the builder for those jobs.
-    
+
     parents = []
     for own builderId, builder of @engine._builders
       continue if builder == this
