@@ -1,6 +1,6 @@
 {
   "name": "asset-reflux",
-  "description": "Engine for building front end code",
+  "description": "Engine for bundling frontend apps",
   "version": "0.0.1",
   "author": "Callum Locke",
   "dependencies": {
