@@ -27,7 +27,7 @@
     "tape": "^3.0.3"
   },
   "license": "MIT",
-  "repository": "https://github.com/callumlocke/asset-reflux.git",
+  "repository": "https://github.com/exhibitjs/asset-reflux.git",
   "scripts": {
     "develop": "nodemon --exec 'npm test' --ext coffee,js,html,css",
     "test": "coffee ./test/acceptance.coffee | tap-spec"
