@@ -9,19 +9,31 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 
+semicolonBuffer = new Buffer ';' # for concatenating js files safely
+
 module.exports = ->
   if !@_getJoinedContents?
     @_getJoinedContents = new Promise (resolve, reject) =>
       @log 'getting joined contents for sources', _.pluck(@builder.sources, 'path')
 
-      promises = @builder.sources.map (source) -> source.getContents()
+      promises = @builder.files.map (filePath) =>
+        new Promise (resolve, reject) =>
+          @engine.readFile filePath, (err, contents) =>
+            # if it's a standard node 'file does not exist' error, correct this to 'false'
+            if err?.code is 'ENOENT'
+              err = null
+              contents = false
+
+            if err? then reject err
+            else resolve contents
 
       Promise.all(promises).then (buffers) =>
         # see if any are false (not found)
         if buffers.indexOf(false) isnt -1
-          missingSources = @builder.sources.filter (source, i) =>
+          @missingSources = @builder.files.filter (filePath, i) =>
             buffers[i] is false
-          @missingSources = _.pluck missingSources, 'path' # indicates this job failed
+          # (missingSources indicates this job failed)
+
           resolve false # yes resolve with 'not found' for the whole lot, because one source couldn't be found
           return
 
@@ -38,4 +50,5 @@ module.exports = ->
             buffers = withSemicolons
           resolve Buffer.concat(buffers)
 
+      , reject
   @_getJoinedContents

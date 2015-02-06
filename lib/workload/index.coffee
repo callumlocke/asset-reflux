@@ -1,18 +1,6 @@
 ###
   Workload constructor
-
-  new Workload engine, buildPaths, changedPaths
-
-  engine - the engine this workload belongs to (used for hooks).
-  buildPaths - array of file paths to use as infiles for this workload.
-  changedPaths - array of file paths that should be purged from any caches (often
-  the same as buildPaths, but not always, e.g. you might have main.js in
-  buildPaths but module.js in changedPaths).
-
-  todo: move most caching/purging logic out of AR. only builder jobs need to be
-  cached in AR, and these should be purgeable in one well defined place
 ###
-
 
 Args = require 'args-js'
 {EventEmitter} = require 'events'
@@ -28,13 +16,13 @@ module.exports = class Workload extends EventEmitter
         engine: Args.OBJECT | Args.Required
         # _type: Engine
       ,
-        buildPaths: Args.ARRAY | Args.Required
+        entryPaths: Args.ARRAY | Args.Required
         _check: (arr) ->
           for item in arr
             return false if typeof item isnt 'string'
           true
       ,
-        changedPaths: Args.ARRAY | Args.Required
+        purgePaths: Args.ARRAY | Args.Required
         _check: (arr) ->
           for item in arr
             return false if typeof item isnt 'string'
@@ -44,8 +32,10 @@ module.exports = class Workload extends EventEmitter
     # configure this instance
     @engine = args.engine
     @id = @engine.getWorkloadId()
-    @buildPaths = args.buildPaths
-    @changedPaths = args.changedPaths
+    @entryPaths = args.entryPaths
+    @purgePaths = args.purgePaths
+
+    @filesOutput = []
 
     if @engine.debug
       @log = =>
@@ -55,5 +45,6 @@ module.exports = class Workload extends EventEmitter
         ]
     else @log = (->)
 
-  # methods
+
+  _outputFile: require './_output-file'
   run: require './run'

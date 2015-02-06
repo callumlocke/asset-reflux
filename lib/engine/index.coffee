@@ -5,8 +5,6 @@ chalk = require 'chalk'
 
 Builder = require '../builder'
 Workload = require '../workload'
-Source = require '../source-file'
-Destination = require '../destination'
 
 defaults =
   crawl: false
@@ -30,6 +28,7 @@ module.exports = class Engine
     @id = options.id || 999
     @crawl = options.crawl
     @concat = options.concat
+    @verboseConcat = options.verboseConcat
     @rev = options.rev
     @inline = options.inline
     @debug = options.debug
@@ -40,11 +39,8 @@ module.exports = class Engine
         console.log.apply null, args
     else @log = (->)
 
-    @readHook = options.readHook
+    @readFile = options.readFile
     @processHook = options.processHook
-    @writeHook = options.writeHook
-
-    @destination = new Destination(this)
 
     if options.concat is true
       @concat = Infinity
@@ -55,8 +51,12 @@ module.exports = class Engine
     else if options.concat?
       throw new TypeError 'Unexpected type for options.concat'
 
+    # hash of builders (with ids as keys)
     @_builders = {}
-    @_sources = {}
+
+    # hash to act as a record of which outfiles were output by which builder(s) - used to determine 'orphaned' outfiles which need deleting
+    # (key is outfile path; value is an array of builders)
+    @_outfileBuilders = {}
 
 
   getWorkloadId: ->
@@ -64,14 +64,14 @@ module.exports = class Engine
     @_lastId++
 
   # method to get a Workload instance configured to use this engine
-  workload: (buildPaths, changedPaths) ->
-    console.assert Array.isArray buildPaths
-    console.assert Array.isArray changedPaths
+  createWorkload: (entryPaths, purgePaths) ->
+    console.assert Array.isArray entryPaths
+    console.assert Array.isArray purgePaths
 
-    new Workload this, buildPaths, changedPaths
+    new Workload this, entryPaths, purgePaths
 
-  # caching instance-getters...
-  getOrCreateBuilder: (files, isPrimary=false) ->
+
+  getOrCreateBuilder: (files, isEntry=false) ->
     id = Engine.getAssetId(files)
 
     if not @_builders[id]?
@@ -81,80 +81,10 @@ module.exports = class Engine
         concat: @concat
         engine: this
         id: id
-        isPrimary: isPrimary
+        isEntry: isEntry
 
     @_builders[id]
 
-  getOrCreateSource: (file) ->
-    @log 'getOrCreateSource', file
 
-    if typeof file isnt 'string'
-      throw new TypeError 'Expected string, not ' + typeof file
-
-    if !@_sources[file]?
-      @_sources[file] = new Source
-        path: file
-        engine: this
-
-    @_sources[file]
-
-
-  hasBuilder: (files) ->
-    @_builders[Engine.getAssetId(files)]?
-
-
-  purgeSource: (sourcePath) ->
-    @log 'purgeSource', sourcePath, ' - exists:', @_sources[sourcePath]?
-
-    if typeof sourcePath isnt 'string'
-      throw new TypeError 'Expected string'
-
-    # we delete the contents promise, not the sourceloader itself.
-    # TODO: AR shouldn't even have source loaders; an engine can just use readFile every time. exhibit can do the caching so AR doesn't have to.
-    @_sources[sourcePath]?_getContents = null
-
-    # we should also unset the job on any builders for this source, forcing the next 'getJob' to make a new one (makes children work)
-    for builderId, builder of @_builders
-      if builder.files.indexOf(sourcePath) > -1
-        @log "deleting builder.job for #{builderId} as part of purgeSource(#{sourcePath})"
-        builder.previousJob = builder.job
-        builder.job = null
-
-
-  getReferringAncestorsOf: (childPath) ->
-    # looking at all the latest builder jobs, find any that are referring ancestors of
-    # the given childPath.
-
-    # this could be recursive, but in reality it can only have parents and grandparents
-    # (css image > css file > html file) so we just do it in 2 steps
-
-    # WARNING: this could now be more than two, because of HTML imports. Rewrite.
-
-    # first find any builders that directly use the given child path.
-    childBuilders = []
-    for own builderId, builder of @_builders
-      if builder.files.indexOf(childPath) > -1
-        childBuilders.push builder
-
-    # now build an array of ancestor builders
-    ancestors = []
-    for childBuilder in childBuilders
-      parents = childBuilder.getParentBuilders()
-      for parent in parents
-        ancestors.push parent unless ancestors.indexOf(parent) > -1
-
-        grandparents = parent.getParentBuilders()
-        for grandparent in grandparents
-          ancestors.push grandparent unless ancestors.indexOf(grandparent) > -1
-
-    ancestorPaths = []
-    for ancestor in ancestors
-      for file in ancestor.files
-        ancestorPaths.push file
-
-    return ancestorPaths
-
-
-# class helper methods
 Engine.getAssetId = (files) ->
   '_' + files.join(path.delimiter)

@@ -1,21 +1,21 @@
 ###
   Builder
 
-  a builder is a reusable object responsible for building a particular multisource.
-  each 'act' of building is a job instance.
+  a builder is a reusable object responsible for building a particular *post-concat* file.
+  
+  a builder is [re]used by calling .execute(), which uses a Job instance to manage the whole build process.
 ###
 
 _ = require 'lodash'
+path = require 'path'
 urlPath = require 'path-browserify'
 bufferEqual = require 'buffer-equal'
 Promise = require 'bluebird'
 Job = require '../job'
-helpers = require '../helpers'
 {EventEmitter} = require 'events'
 chalk = require 'chalk'
 URLSafeBase64 = require 'urlsafe-base64'
 crypto = require 'crypto'
-semicolonBuffer = new Buffer ';'
 
 defaults = {}
 
@@ -36,19 +36,20 @@ module.exports = class Builder extends EventEmitter
     @engine = options.engine
     @ext = urlPath.extname @files[0]
     @concat = options.concat
-    @isPrimary = options.isPrimary
+    @isEntry = options.isEntry
 
-    # get/create the source objects for this builder
-    @sources = @files.map (file) => @engine.getOrCreateSource(file)
+    # validate
+    for filePath in @files
+      console.assert filePath.charAt(1) isnt '.' and filePath.charAt(1) isnt '/', "invalid: #{filePath}"
 
     @id = options.id
 
   # method to get the current job, whether it's running or finished.
   # the workload id, if supplied, is only used if there is no job.
-  getJob: (workloadId) ->
+  getJob: (workload) ->
 
     # start executing only if there has never been a job yet
-    if not @job? then @execute(null, workloadId)
+    if not @job? then @execute(null, workload)
 
     # return the current job (whether new or old)
     @job
@@ -57,7 +58,7 @@ module.exports = class Builder extends EventEmitter
   # gets a promise that resolves with an 'actioned' Job
   # instance, possibly one that has already been created. this method
   # ensures there is only one job running at a time.
-  execute: (changedSourcePaths, workloadId) ->
+  execute: (purgePaths, workload) ->
 
     # debounce jobs (leading:true, trailing:true)
     if @_executing
@@ -66,49 +67,59 @@ module.exports = class Builder extends EventEmitter
     @_executing = true
 
     # establish situation re: job instances
-    if not workloadId? then throw new Error 'expected workloadId'
+    if not workload? then throw new Error 'expected workload'
     @previousJob = @job if @job?
 
+    # make a new job
     @job = new Job
-      workloadId: workloadId
+      workload: workload
       builder: this
-      changedSourcePaths: changedSourcePaths
+      purgePaths: purgePaths
 
+    # return a promise that the job is done (actioned)
     new Promise (resolve, reject) =>
-      @job.actioned().then (targets, refs) =>
+      @job.actioned().then (outfiles, refs) =>
         @_executing = false
         resolve(@job)
       , reject
 
 
   # gets the appropriate output file path for this builder - either something like `concat-2iyo8a.ext` or the file path, revved if necessary
-  getPrimaryTargetPath: (buffer) ->
-    if @sources.length > 1
-      sourcePathsJoined = _.pluck(@sources, 'path').join('\n')
-      filePath = 'concat-' + digest(new Buffer(sourcePathsJoined)) + @ext
-    else filePath = @sources[0].path
+  getPrimaryOutfilePath: (buffer=null) ->
+    if @files.length > 1
+      if @engine.verboseConcat
+        filePath = (
+          'concat-' +
+          @files.map((filePath) ->
+            filePath
+              .substr(0, filePath.lastIndexOf('.'))
+              .split(path.sep).join('__')
+          ).join('___') +
+          @ext
+        )
+      else
+        filePath = 'concat-' + digest(new Buffer(@files.join('\n'))) + @ext
 
-    if @engine.rev && !@isPrimary
-      if !buffer? then throw new Error 'trying to rev a builder without providing buffer! this should never happen'
+    else filePath = @files[0]
+
+    if @engine.rev && !@isEntry
+      if !buffer? then throw new Error 'trying to rev a builder without providing buffer, this should never happen'
       filePath = digest(buffer) + filePath
 
     filePath
 
+  getPrimaryOutfileURL: (buffer) ->
+    url = @getPrimaryOutfilePath buffer
 
-  # # gets the last completed job, or null
-  # getLastCompleteJob: ->
-  #   if @job?._actioned?.isFulfilled()
-  #     @job
+    # make it use forward slashes if we're on windows or something
+    if path.sep isnt '/'
+      url = url.split(path.sep).join('/')
 
-  #   else if @previousJob?
-  #     console.assert @previousJob._actioned.isFulfilled(), 'should be fulfilled at this point'
-  #     @previousJob
-
-  #   else null
+    url
 
 
   getParentBuilders: ->
-    # return any immediate parents of this builder, based on the last job. i.e. builders that have children including this one. they will be child jobs, and we can see if this is the builder for those jobs.
+    # return any immediate parents of this builder, based on its last job. i.e. builders that have children including this one. they will be child jobs, and we can see if this is the builder for those jobs.
 
     parents = []
     for own builderId, builder of @engine._builders
@@ -118,7 +129,7 @@ module.exports = class Builder extends EventEmitter
 
       if !job?
         @engine.log 'no job or previousJob found in builder', builderId
-      # console.assert job._actioned.isFulfilled()
+      console.assert job._actioned.isFulfilled()
 
       children = job?._getChildren?.value()
 
@@ -128,3 +139,37 @@ module.exports = class Builder extends EventEmitter
             parents.push builder
 
     parents
+
+
+  isOrphaned: ->
+    # if this is an entry, it can't be an orphan
+    if @isEntry
+      @engine.log "builder #{@id} not an orphan because it is an entry"
+      return false
+
+    parents = @getParentBuilders()
+
+    # if no parents, it's an orphan
+    if !parents.length
+      @engine.log "builder #{@id} confirmed orphan because no parents"
+      return true
+
+    # if any parents are entries, it's not an orphan
+    for parent in parents
+      if parent.isEntry
+        @engine.log "builder #{@id} not an orphan because parent '#{parent.id}' is an entry"
+        return false
+
+    # TODO ======
+    # # look through parents of parents until one of them is an entry
+    # ancestors = parents
+    # loop
+    #   lengthBefore = ancestors.length
+    #   parents = @getParentBuilders()
+    #   ancestors = ancestors.concat ... getParentBuilders()
+    #   # break if no change on this iteration
+    #   if ancestors.length == lengthBefore
+    #     break
+
+    # if still not found any, this builder is orphaned
+    return true

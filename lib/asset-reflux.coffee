@@ -9,10 +9,10 @@ Engine = require './engine'
 module.exports = (options) -> new Engine options;
 module.exports.Engine = Engine
 
-# also export various utility deps, in case a wrapper lib wants them
+# also export various utility deps, in case the wrapper lib wants to use them
 module.exports.async    = require 'async'
 module.exports.Promise  = require 'bluebird'
 module.exports.chalk    = require 'chalk'
 module.exports._        = require 'lodash'
 module.exports.Args     = require 'args-js'
-module.exports.File     = require 'x-file'
+module.exports.XFile     = require 'x-file'

@@ -9,7 +9,14 @@
 Promise = require 'bluebird'
 findAssets = require 'find-assets'
 _ = require 'lodash'
-helpers = require '../helpers'
+urlPath = require 'path-browserify'
+
+getBaseRelativeURL = (refererRelativeURL, referer) ->
+  if refererRelativeURL.charAt(0) == '/'
+    refererRelativeURL.substring(1)
+  else
+    urlPath.resolve('/' + urlPath.dirname(referer), refererRelativeURL).substring(1)
+
 
 module.exports = ->
     if !@_getChildren?
@@ -29,11 +36,11 @@ module.exports = ->
           if allReferenceDetails?
             children = allReferenceDetails.map((details) =>
               resolvedURLPaths = _.pluck(details, 'url').map (url) =>
-                helpers.getBaseRelativeURL(url, @builder.getPrimaryTargetPath())
+                getBaseRelativeURL url, @builder.getPrimaryOutfileURL()
 
               job = @engine.getOrCreateBuilder(
-                resolvedURLPaths, true
-              ).getJob(@workloadId, @builder.engine.rev)
+                resolvedURLPaths, false
+              ).getJob(@workload, @builder.engine.rev)
 
               { resolvedURLPaths, job, details }
             )

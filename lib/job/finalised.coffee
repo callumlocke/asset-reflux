@@ -4,10 +4,12 @@
   'finalised' means one of the following has been established:
     .targets or .missingSources or .beforeFinaliseError
   ...and also any child jobs are finalised too
+
+  THE ABOVE COMMENT IS OUT OF DATE.
 ###
 
 Promise = require 'bluebird'
-File = require 'x-file'
+XFile = require 'x-file'
 _ = require 'lodash'
 urlPath = require 'path-browserify'
 
@@ -22,7 +24,7 @@ module.exports = ->
 
         Promise.all([
 
-          # establish @targets or @missingSources
+          # establish @outfiles or @missingSources
           new Promise (resolve) =>
 
             (new Promise (resolve) =>
@@ -45,11 +47,11 @@ module.exports = ->
                         refStart = child.details[0].start
                         refEnd = child.details[child.details.length - 1].end
 
-                        newPath = child.job.builder.getPrimaryTargetPath() # will this get revved if nec?
+                        newPath = child.job.builder.getPrimaryOutfileURL() # will this get revved if nec?
 
                         # make the newPath relative to this builder/job's dirname
                         newPath = urlPath.relative(
-                          urlPath.dirname(@builder.getPrimaryTargetPath())
+                          urlPath.dirname(@builder.getPrimaryOutfileURL())
                           newPath
                         )
 
@@ -85,24 +87,24 @@ module.exports = ->
               else
                 @log 'preFinalBuffer length', preFinalBuffer.length
 
-                # we definitely need to make a targets array, unless the `process` hook fails
-                primaryTarget = new File(
-                  @builder.getPrimaryTargetPath(preFinalBuffer), # may be revved
+                # we definitely need to make a outfiles array, unless the `process` hook fails
+                primaryOutfile = new XFile(
+                  @builder.getPrimaryOutfilePath(preFinalBuffer), # may be revved
                   preFinalBuffer
                 )
 
                 # run the user's process hook
-                @builder.engine.processHook.call null, primaryTarget, @changedSourcePaths, (err, targets) =>
+                @builder.engine.processHook.call null, primaryOutfile, @purgePaths, (err, outfiles) =>
                   @log 'process hook had error?', err?
 
                   if err?
                     @beforeFinaliseError = err
                     resolve()
                   else
-                    # @targets = targets.map (target) =>
-                    #   return target if target instanceof File
-                    #   return new File target.path, (target.contents || target.string || null)
-                    @targets = targets
+                    if Array.isArray outfiles
+                      @outfiles = outfiles
+                    else if outfiles?
+                      @outfiles = [outfiles]
                     resolve()
             )
           ,
@@ -115,8 +117,8 @@ module.exports = ->
                   @log 'waiting for crawled children to be finalised'
                   Promise.all(children.map((child) =>
                     child.job.finalised()
-                  )).then((results) =>
-                    @log 'children finalised', results.length
+                  )).then(=>
+                    @log 'children finalised'
                     resolve()
                     return
                   )
@@ -126,24 +128,31 @@ module.exports = ->
               @log 'not waiting for children to finalise'
               resolve()
 
-        ]).then((results) =>
-          # now all targets are known, we can see which ones from
-          # the previousJob's targets are no longer there, and make
-          # @deletions for them.
+        ]).then(() =>
+          # add basic deletions (for any files that were output by this builder's
+          # previous job, but weren't output by this one)
+
           previousJob = @builder.previousJob
 
-          @log 'previousJob exists:', previousJob
-          @log 'previousJob targets:', previousJob?.targets
+          @log 'previousJob exists:', previousJob?
+          @log 'previousJob outfiles:', previousJob?.outfiles
 
-          if previousJob? && previousJob.targets?
-            if @targets?
-              targetPaths = _.pluck @targets, 'path'
-              @deletions = previousJob.targets.filter (target) =>
-                targetPaths.indexOf(target.path) is -1
-            else @deletions = previousJob.targets # all of them!
+          if previousJob? && previousJob.outfiles?
+            if @outfiles?
+              outfilePaths = _.pluck @outfiles, 'path'
+              @deletions = previousJob.outfiles.filter (outfile) =>
+                outfilePaths.indexOf(outfile.path) is -1
+            else @deletions = previousJob.outfiles # all of them!
           @log 'finalised deletions', @deletions
 
-          @log 'resolving finalised now', results
+          # turn them into actual deletions (i.e. false contents)
+          if @deletions?
+            for deletion, i in @deletions
+              @deletions[i] = new XFile
+                path: deletion.path
+                contents: false
+
+          @log 'resolving finalised now'
           resolve()
         )
       )
