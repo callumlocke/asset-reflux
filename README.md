@@ -1,6 +1,6 @@
 # asset-reflux
 
-Build system engine for front end apps to help with concatenation and revving.
+Bundling engine for front end apps.
 
 Docs coming.
 
