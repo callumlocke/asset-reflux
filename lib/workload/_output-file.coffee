@@ -11,12 +11,12 @@
 bufferEqual = require 'buffer-equal'
 _ = require 'lodash'
 Builder = require '../builder'
-XFile = require 'x-file'
 
 module.exports = (outfile, fromBuilder) ->
   if !(fromBuilder instanceof Builder) && fromBuilder != false
     throw new TypeError 'expected builder (or explicit false)'
-  if !(outfile instanceof XFile)
+  if !outfile?.isXFile
+    console.error outfile
     throw new TypeError 'expected xfile'
 
   @log "workload._outputFile called with fromBuilder: #{fromBuilder.id}", outfile.inspect()
@@ -38,7 +38,7 @@ module.exports = (outfile, fromBuilder) ->
     # add this builder to the builders array for this outfile
     if not @engine._outfileBuilders[outfile.path]?
       @engine._outfileBuilders[outfile.path] = []
-    
+
     if fromBuilder && @engine._outfileBuilders[outfile.path].indexOf fromBuilder is -1
       @log "registering builder #{fromBuilder.id} as reason for outfile", outfile.inspect()
       @engine._outfileBuilders[outfile.path].push fromBuilder
