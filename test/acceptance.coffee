@@ -257,5 +257,5 @@ test 'asset-reflux', (t) ->
             done()
 
   ], (err) ->
-    t.error err, 'no uncaught errors'  
+    t.error err, 'no uncaught errors'
     t.end()

@@ -2,7 +2,7 @@
   Builder
 
   a builder is a reusable object responsible for building a particular *post-concat* file.
-  
+
   a builder is [re]used by calling .execute(), which uses a Job instance to manage the whole build process.
 ###
 
@@ -84,7 +84,8 @@ module.exports = class Builder extends EventEmitter
       , reject
 
 
-  # gets the appropriate output file path for this builder - either something like `concat-2iyo8a.ext` or the file path, revved if necessary
+  # gets the appropriate output file path for this builder - either something
+  # like `concat-2iyo8a.ext` or the file path, revved using `buffer` if provided
   getPrimaryOutfilePath: (buffer=null) ->
     if @files.length > 1
       if @engine.verboseConcat
@@ -108,6 +109,7 @@ module.exports = class Builder extends EventEmitter
 
     filePath
 
+
   getPrimaryOutfileURL: (buffer) ->
     url = @getPrimaryOutfilePath buffer
 
@@ -118,10 +120,10 @@ module.exports = class Builder extends EventEmitter
     url
 
 
-  getParentBuilders: ->
-    # return any immediate parents of this builder, based on its last job. i.e. builders that have children including this one. they will be child jobs, and we can see if this is the builder for those jobs.
+  getReferringBuilders: ->
+    # return any immediate referrers of this builder, based on its last job. i.e. builders that have children including this one. they will be child jobs, and we can see if this is the builder for those jobs.
 
-    parents = []
+    referers = []
     for own builderId, builder of @engine._builders
       continue if builder == this
 
@@ -136,9 +138,9 @@ module.exports = class Builder extends EventEmitter
       if children?
         for child in children
           if child.job.builder == this
-            parents.push builder
+            referers.push builder
 
-    parents
+    referers
 
 
   isOrphaned: ->
@@ -147,26 +149,26 @@ module.exports = class Builder extends EventEmitter
       @engine.log "builder #{@id} not an orphan because it is an entry"
       return false
 
-    parents = @getParentBuilders()
+    referers = @getReferringBuilders()
 
-    # if no parents, it's an orphan
-    if !parents.length
-      @engine.log "builder #{@id} confirmed orphan because no parents"
+    # if no referers, it's an orphan
+    if !referers.length
+      @engine.log "builder #{@id} confirmed orphan because no referers"
       return true
 
-    # if any parents are entries, it's not an orphan
-    for parent in parents
-      if parent.isEntry
-        @engine.log "builder #{@id} not an orphan because parent '#{parent.id}' is an entry"
+    # if any referers are entries, it's not an orphan
+    for referer in referers
+      if referer.isEntry
+        @engine.log "builder #{@id} not an orphan because referer '#{referer.id}' is an entry"
         return false
 
     # TODO ======
-    # # look through parents of parents until one of them is an entry
-    # ancestors = parents
+    # # look through referers of referers until one of them is an entry
+    # ancestors = referers
     # loop
     #   lengthBefore = ancestors.length
-    #   parents = @getParentBuilders()
-    #   ancestors = ancestors.concat ... getParentBuilders()
+    #   referers = @getReferringBuilders()
+    #   ancestors = ancestors.concat ... getReferringBuilders()
     #   # break if no change on this iteration
     #   if ancestors.length == lengthBefore
     #     break
