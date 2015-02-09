@@ -40,7 +40,7 @@ module.exports = class Engine
     else @log = (->)
 
     @readFile = options.readFile
-    @processHook = options.processHook
+    @finalise = options.finalise
 
     if options.concat is true
       @concat = Infinity

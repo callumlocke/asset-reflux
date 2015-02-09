@@ -45,7 +45,7 @@ readFile = (sourcePath, done) ->
     contents = new Buffer(sourceFiles[sourcePath])
   else contents = false
   done null, contents
-processHook = (file, triggers, done) ->
+finalise = (file, triggers, done) ->
   assert file instanceof File
   if triggers?
     assert _.isArray(triggers)
@@ -78,7 +78,7 @@ test 'asset-reflux', (t) ->
         concat: false
         rev: false
         readFile: readFile
-        processHook: processHook
+        finalise: finalise
 
       workload1 = engine.createWorkload sourcePaths, []
       workload1.on 'output', outputSpy
@@ -137,7 +137,7 @@ test 'asset-reflux', (t) ->
         # rev: true
         crawl: true
         readFile: readFile
-        processHook: processHook
+        finalise: finalise
 
       outputSpy = sinon.spy()
 

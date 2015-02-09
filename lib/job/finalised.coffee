@@ -94,7 +94,7 @@ module.exports = ->
                 )
 
                 # run the user's process hook
-                @builder.engine.processHook.call null, primaryOutfile, @purgePaths, (err, outfiles) =>
+                @builder.engine.finalise.call null, primaryOutfile, @purgePaths, (err, outfiles) =>
                   @log 'process hook had error?', err?
 
                   if err?
