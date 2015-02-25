@@ -58,7 +58,6 @@ module.exports = class Engine
     # (key is outfile path; value is an array of builders)
     @_outfileBuilders = {}
 
-
   getWorkloadId: ->
     if !@_lastId? then @_lastId = 1
     @_lastId++

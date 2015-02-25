@@ -18,18 +18,28 @@
     "x-file": "^0.2.0"
   },
   "devDependencies": {
+    "babel": "^4.4.6",
     "fs-readdir-recursive": "^0.1.0",
     "mkdirp": "^0.5.0",
     "nodemon": "^1.3.6",
     "rimraf": "^2.2.8",
     "sinon": "^1.12.2",
+    "source-map-support": "^0.2.9",
     "tap-spec": "^2.2.1",
     "tape": "^3.5.0"
   },
+  "files": [
+    "lib"
+  ],
   "license": "MIT",
+  "main": "lib/index.js",
   "repository": "https://github.com/exhibitjs/asset-reflux.git",
   "scripts": {
-    "develop": "nodemon --exec 'npm test' --ext coffee,js,html,css",
-    "test": "coffee ./test/acceptance.coffee | tap-spec"
+    "clean": "rm -rf lib",
+    "build": "babel --out-dir lib src && rm lib/**/*.coffee && coffee --output lib --compile src",
+    "buildwithmaps": "babel --source-maps --out-dir lib src && rm lib/**/*.coffee && coffee --map --output lib --compile src",
+    "develop": "nodemon --exec 'npm test' --watch src --watch test --ext coffee,js",
+    "prepublish": "npm run clean && npm run build",
+    "test": "npm run clean && npm run buildwithmaps && coffee ./test/acceptance.coffee | tap-spec"
   }
 }

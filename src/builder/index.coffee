@@ -9,7 +9,6 @@
 _ = require 'lodash'
 path = require 'path'
 urlPath = require 'path-browserify'
-bufferEqual = require 'buffer-equal'
 Promise = require 'bluebird'
 Job = require '../job'
 {EventEmitter} = require 'events'

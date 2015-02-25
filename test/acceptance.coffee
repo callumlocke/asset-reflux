@@ -1,5 +1,7 @@
+require('source-map-support').install()
+
 test = require 'tape'
-assetReflux = require '..'
+assetReflux = require '../lib/asset-reflux'
 _ = require 'lodash'
 path = require 'path'
 File = require 'x-file'
