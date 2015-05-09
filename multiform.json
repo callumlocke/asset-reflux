@@ -1,0 +1,34 @@
+{
+  "defaults": {
+    "loose": true,
+    "optional": [
+      "es7.classProperties"
+    ]
+  },
+  "builds": [
+    {
+      "dir": "lib",
+      "version": "4.1.0.27",
+      "options": {
+        "blacklist": [
+          "regenerator",
+          "es6.forOf",
+          "es6.templateLiterals",
+          "es6.constants"
+        ],
+        "optional": [
+          "bluebirdCoroutines"
+        ]
+      }
+    },
+    {
+      "dir": "lib-es5",
+      "options": {
+        "optional": [
+          "runtime",
+          "es7.asyncFunctions"
+        ]
+      }
+    }
+  ]
+}

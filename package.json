@@ -1,45 +1,53 @@
 {
   "name": "asset-reflux",
-  "description": "Engine for bundling frontend apps",
-  "version": "0.1.3",
+  "description": "Manage a series of build phases for a set of connected assets.",
+  "version": "0.2.0",
   "author": "Callum Locke",
+  "bugs": {
+    "url": "https://github.com/callumlocke/asset-reflux/issues"
+  },
   "dependencies": {
-    "args-js": "^0.10.6",
-    "async": "^0.9.0",
-    "bluebird": "^2.9.6",
-    "buffer-equal": "^0.0.1",
-    "chalk": "^0.5.1",
-    "coffee-script": "^1.9.0",
-    "find-assets": "^0.3.1",
-    "light-array": "0.0.2",
-    "lodash": "^3.1.0",
-    "path-browserify": "0.0.0",
-    "urlsafe-base64": "^1.0.0",
-    "x-file": "^0.2.0"
+    "babel-runtime": "^5.1.13",
+    "bluebird": "^2.9.24",
+    "in-place": "^1.0.0",
+    "lodash": "^3.7.0",
+    "multiform": "0.0.1-alpha.2"
   },
   "devDependencies": {
-    "babel": "^4.4.6",
-    "fs-readdir-recursive": "^0.1.0",
-    "mkdirp": "^0.5.0",
-    "nodemon": "^1.3.6",
-    "rimraf": "^2.2.8",
-    "sinon": "^1.12.2",
-    "source-map-support": "^0.2.9",
-    "tap-spec": "^2.2.1",
-    "tape": "^3.5.0"
+    "babel": "^5.1.13",
+    "babel-eslint": "^3.0.1",
+    "chalk": "^1.0.0",
+    "clear-trace": "0.0.4",
+    "eslint": "^0.20.0",
+    "glob": "^5.0.5",
+    "multiform-build": "0.0.1-alpha",
+    "nodemon": "^1.3.7",
+    "source-map-support": "^0.2.10"
   },
   "files": [
-    "lib"
+    "src",
+    "lib",
+    "lib-es5",
+    "index.js",
+    "multiform.json"
+  ],
+  "homepage": "https://github.com/callumlocke/asset-reflux",
+  "keywords": [
+    "babel",
+    "build",
+    "module",
+    "multiform"
   ],
   "license": "MIT",
-  "main": "lib/index.js",
-  "repository": "https://github.com/exhibitjs/asset-reflux.git",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callumlocke/asset-reflux"
+  },
   "scripts": {
-    "clean": "rm -rf lib",
-    "build": "babel --out-dir lib src && rm lib/**/*.coffee && coffee --output lib --compile src",
-    "buildwithmaps": "babel --source-maps --out-dir lib src && rm lib/**/*.coffee && coffee --map --output lib --compile src",
-    "develop": "nodemon --exec 'npm test' --watch src --watch test --ext coffee,js",
-    "prepublish": "npm run clean && npm run build",
-    "test": "npm run clean && npm run buildwithmaps && coffee ./test/acceptance.coffee | tap-spec"
+    "prepublish": "eslint . && multiform",
+    "pretest": "multiform",
+    "test": "babel-node --source-maps --stage 0 ./test/_all.js",
+    "watch": "nodemon --exec 'npm test' --watch src --watch test --watch index.js --watch package.json"
   }
 }
