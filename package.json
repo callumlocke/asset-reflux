@@ -11,7 +11,8 @@
     "bluebird": "^2.9.24",
     "in-place": "^1.0.0",
     "lodash": "^3.7.0",
-    "multiform": "0.0.1-alpha.2"
+    "multiform": "0.0.1-alpha.2",
+    "virtual-folder": "^0.2.2"
   },
   "devDependencies": {
     "babel": "^5.1.13",
